@@ -3,6 +3,7 @@ import signal
 
 from config import logger
 from upbit_ws_client import upbit_websocket_client
+from kafka_producer import create_producer, stop_producer
 
 # 종료 신호 처리를 위한 플래그
 shutdown_requested = False
@@ -15,8 +16,14 @@ def handle_shutdown_signal(sig, frame):
 
 async def main():
     """애플리케이션 메인 실행 함수"""
+    # Kafka 프로듀서 생성 및 시작
+    producer = await create_producer()
+    if not producer:
+        logger.error("Failed to initialize Kafka producer. Exiting application.")
+        return # 프로듀서 시작 실패 시 종료
+
     # 웹소켓 클라이언트 태스크 생성
-    websocket_task = asyncio.create_task(upbit_websocket_client())
+    websocket_task = asyncio.create_task(upbit_websocket_client(producer))
     # 종료 신호 대기
     while not shutdown_requested:
         # 태스크가 예외로 종료되었는지 확인
@@ -47,7 +54,8 @@ async def main():
         except Exception as e:
              logger.error(f"Error during WebSocket task cancellation: {e}")
 
-    # TODO: Kafka 프로듀서 종료 (버퍼에 남은 메시지 전송 시도)
+    # Kafka 프로듀서 종료 (버퍼에 남은 메시지 전송 시도)
+    await stop_producer(producer)
 
     logger.info("Application shutdown complete.")
 
