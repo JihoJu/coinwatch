@@ -1,0 +1,5 @@
+python-dotenv==1.0.1 # 환경 변수 관리
+websockets==12.0     # 웹소켓 클라이언트
+aiokafka==0.10.0    # 비동기 Kafka 클라이언트
+orjson==3.10.6      # 빠른 JSON 처리 (선택 사항, json 모듈로 대체 가능)
+asyncio==3.4.3     # 파이썬 내장 비동기 라이브러리
