@@ -1,44 +1,61 @@
-### 브랜치는 **브랜치(main)** + **기능 브랜치로 구분**
+# Coinwatch
 
-### 🔹 기본 브랜치 구성
+## 개요
 
-| 브랜치             | 설명                                     |
-| ------------------ | ---------------------------------------- |
-| `main` or `master` | 🚀 실제 배포되는 최종 버전 (배포 시 사용) |
-| `feature/*`        | ✨ 새로운 기능 개발 브랜치                |
+본 프로젝트는 Upbit 거래소의 웹소켓 API를 이용하여 KRW-BTC 페어의 실시간 가격 및 거래량 데이터를 수집하고, 이를 Apache Kafka 토픽에 적재하는 시스템입니다.
 
-🔧 예시 브랜치 흐름
+## 주요 기능
 
-```bash
-main
-  ├─ feature/login-page
-  └─ feature/btc-streaming
-```
+- Upbit 웹소켓 API 연동
+- KRW-BTC 실시간 시세 데이터 수집 (가격, 거래량)
+- Kafka 토픽으로 데이터 전송
 
-## ✅ 2. 커밋 컨벤션 (Commit Convention)
+## 향후 계획
 
-### ✍️ 기본 형식 (Conventional Commits)
+- BTC 외에 이더리움(ETH) 등 다른 암호화폐 데이터 수집 기능 추가
 
-```bash
-<타입>: <변경사항 요약>
-```
+## 설치 및 실행 방법
 
-| 타입       | 설명                             |
-| ---------- | -------------------------------- |
-| `feat`     | ✨ 새로운 기능 추가               |
-| `fix`      | 🐞 버그 수정                      |
-| `docs`     | 📝 문서 수정                      |
-| `style`    | 💄 코드 포맷팅, 세미콜론 누락 등  |
-| `refactor` | 🔨 코드 리팩토링 (기능 변화 없음) |
-| `test`     | ✅ 테스트 추가 또는 수정          |
-| `chore`    | 🔧 빌드, 설정 파일 등 수정        |
-| `perf`     | 🚀 성능 개선                      |
+1.  **저장소 복제:**
+    ```bash
+    git clone https://github.com/JihoJu/coinwatch.git
+    cd coinwatch
+    ```
 
-### 🔧 커밋 예시
+2.  **가상 환경 생성 및 활성화 (권장):**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # Linux/macOS
+    # venv\Scripts\activate  # Windows
+    ```
 
-```bash
-feat: 실시간 비트코인 데이터 차트 추가
-fix: 스트리밍 연결 오류 수정
-refactor: 데이터 파싱 로직 정리
-docs: README에 프로젝트 설명 추가
-```
+3.  **의존성 설치:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4.  **환경 변수 설정:**
+    `.env` 파일을 생성하고 필요한 환경 변수 (예: Kafka 브로커 주소, 토픽 이름 등) 를 설정합니다. `.env.example` 파일이 있다면 참고하여 작성합니다.
+
+5.  **실행:**
+    ```bash
+    python src/main.py
+    ```
+
+6.  **(테스트 시) DEBUG 레벨 로깅 활성화:**
+    환경 변수 `LOG_LEVEL`을 `DEBUG`로 설정하여 실행하면 DEBUG 레벨 로그를 확인할 수 있습니다.
+
+    ```bash
+    # Linux/macOS
+    export LOG_LEVEL=DEBUG
+    python src/main.py
+
+    # Windows (Command Prompt)
+    set LOG_LEVEL=DEBUG
+    python src/main.py
+
+    # Windows (PowerShell)
+    $env:LOG_LEVEL = "DEBUG"
+    python src/main.py
+    ```
+    기본 로그 레벨은 `INFO` 입니다.

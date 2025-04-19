@@ -7,8 +7,12 @@ import logging
 env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
 load_dotenv(dotenv_path=env_path)
 
+# 로깅 레벨 설정 (환경 변수 우선)
+log_level_str = os.getenv('LOG_LEVEL', 'INFO').upper()
+log_level = getattr(logging, log_level_str, logging.INFO) # 유효하지 않으면 INFO 사용
+
 # 로깅 설정
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=log_level,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -26,6 +30,7 @@ RECONNECT_DELAY_SECONDS = 5 # 웹소켓 재연결 시도 간격 (초)
 
 # 설정값 로깅
 logger.info("--- Application Configuration ---")
+logger.info(f"LOG_LEVEL: {log_level_str} (Effective: {logging.getLevelName(log_level)})") # 현재 적용된 로그 레벨 로깅 추가
 logger.info(f"KAFKA_BROKERS: {KAFKA_BROKERS}")
 logger.info(f"KAFKA_TOPIC: {KAFKA_TOPIC}")
 logger.info(f"UPBIT_WEBSOCKET_URI: {UPBIT_WEBSOCKET_URI}")
