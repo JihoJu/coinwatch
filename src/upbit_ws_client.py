@@ -28,6 +28,7 @@ async def upbit_websocket_client(producer: AIOKafkaProducer) -> None:
                 subscribe_request = [
                     {"ticket": str(uuid.uuid4())},
                     {"type": "ticker", "codes": MARKET_CODES},
+                    {"type": "trade", "codes": MARKET_CODES},
                     {"format": "DEFAULT"} # 또는 "SIMPLE"
                 ]
                 await websocket.send(orjson.dumps(subscribe_request))
@@ -42,7 +43,10 @@ async def upbit_websocket_client(producer: AIOKafkaProducer) -> None:
 
                         # 'ticker' 타입 데이터만 처리 (필요시 다른 타입도 처리)
                         if data.get('type') == 'ticker':
-                            logger.debug(f"Sending Kafka Producer: {data}")
+                            logger.debug(f"Sending Tricker Data Kafka Producer: {data}")
+                            await send_to_kafka(producer, data)
+                        elif data.get('type') == 'trade':
+                            logger.debug(f"Sending Trade Data Kafka Producer: {data}")
                             await send_to_kafka(producer, data)
                         else:
                             logger.debug(f"Ignoring non-ticker message: {data.get('type')}")
