@@ -3,7 +3,7 @@ import orjson # orjson 사용, 없으면 import json 사용
 from datetime import datetime, timezone
 from typing import Dict, Any
 
-from config import KAFKA_BROKERS, KAFKA_TOPIC, logger
+from config import KAFKA_BROKERS, logger
 
 async def create_producer() -> AIOKafkaProducer | None:
     """Kafka 프로듀서를 생성하고 시작합니다."""
@@ -22,12 +22,13 @@ async def create_producer() -> AIOKafkaProducer | None:
         logger.error(f"Failed to start Kafka producer: {e}")
         return None
 
-async def send_to_kafka(producer: AIOKafkaProducer, data: Dict[str, Any]) -> None:
+async def send_to_kafka(producer: AIOKafkaProducer, topic: str, data: Dict[str, Any]) -> None:
     """
-    수신된 데이터를 Kafka 토픽으로 전송합니다.
-    
+    수신된 데이터를 지정된 Kafka 토픽으로 전송합니다.
+
     Args:
         producer (AIOKafkaProducer): AIOKafkaProducer 인스턴스
+        topic (str): 메시지를 전송할 Kafka 토픽 이름
         data (Dict[str, Any]): Kafka에 전송할 dict 객체
     """
     try:
@@ -43,9 +44,10 @@ async def send_to_kafka(producer: AIOKafkaProducer, data: Dict[str, Any]) -> Non
             logger.warning("Could not determine Kafka message key from data.")
 
         # Kafka에 메시지 전송 (send_and_wait는 전송 완료 확인)
-        future = await producer.send(KAFKA_TOPIC, value=data, key=key_bytes)
-        record_metadata = await future # 전송 결과 대기
-        logger.debug(f"Message sent to Kafka topic '{KAFKA_TOPIC}': partition={record_metadata.partition}, offset={record_metadata.offset}")
+        # producer.send_and_wait 대신 producer.send 사용 (결과를 기다릴 필요 없음)
+        future = await producer.send(topic, value=data, key=key_bytes)
+        record_metadata = await future # 전송 결과 대기 (send_and_wait 와 유사한 효과)
+        logger.debug(f"Message sent to Kafka topic '{topic}': partition={record_metadata.partition}, offset={record_metadata.offset}")
     except Exception as e:
         logger.error(f"Failed to send message to Kafka: {e}")
         # 필요시 여기서 재시도 로직 추가 가능 (AIOKafkaProducer는 내부적으로 재시도)
