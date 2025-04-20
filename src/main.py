@@ -1,9 +1,9 @@
 import asyncio
 import signal
 
-from config import logger
-from upbit_ws_client import upbit_websocket_client
-from kafka_producer import create_producer, stop_producer
+from src.config import logger
+from src.upbit_ws_client import upbit_websocket_client
+from src.kafka_producer import create_producer, stop_producer
 
 # 종료 신호 처리를 위한 플래그
 shutdown_requested = False

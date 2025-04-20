@@ -4,9 +4,39 @@ import websockets
 import orjson # orjson 사용, 없으면 import json 사용
 import uuid
 from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
+from datetime import datetime, timezone
 
-from config import UPBIT_WEBSOCKET_URI, MARKET_CODES, RECONNECT_DELAY_SECONDS, logger
-from kafka_producer import send_to_kafka
+from src.config import UPBIT_WEBSOCKET_URI, MARKET_CODES, RECONNECT_DELAY_SECONDS, logger, KAFKA_TOPIC
+from src.kafka_producer import send_to_kafka
+
+async def _process_message(message_data: bytes, producer: AIOKafkaProducer, topic: str):
+    """
+    수신된 웹소켓 메시지를 처리하고 Kafka로 전송합니다.
+
+    Args:
+        message_data (bytes): 웹소켓에서 수신된 raw 메시지 데이터
+        producer (AIOKafkaProducer): Kafka 프로듀서 인스턴스
+        topic (str): 메시지를 전송할 Kafka 토픽 이름
+    """
+    try:
+        data = orjson.loads(message_data)
+        logger.debug(f"Received data: {data}")
+
+        # 데이터 추가: 수신 타임스탬프 추가 (UTC 기준 ISO 형식)
+        data['received_timestamp_utc'] = datetime.now(timezone.utc).isoformat()
+
+        # ticker 또는 trade 타입 데이터 처리
+        msg_type = data.get('type')
+        if msg_type in ['ticker', 'trade']:
+            logger.debug(f"Sending {msg_type.capitalize()} Data Kafka Producer: {data}")
+            await send_to_kafka(producer, topic, data)
+        else:
+            logger.debug(f"Ignoring non-ticker/trade message: {msg_type}")
+
+    except orjson.JSONDecodeError as e:
+        logger.error(f"Failed to decode JSON message: {message_data}, Error: {e}")
+    except Exception as e:
+        logger.error(f"Error processing received message: {e}")
 
 async def upbit_websocket_client(producer: AIOKafkaProducer) -> None:
     """
@@ -18,6 +48,7 @@ async def upbit_websocket_client(producer: AIOKafkaProducer) -> None:
     Returns:
         None
     """
+    kafka_topic = KAFKA_TOPIC # 설정에서 토픽 이름 가져오기
     while True:
         try:
             # websockets.connect는 연결 실패 시 자동으로 재시도 (기본 backoff 포함)
@@ -34,27 +65,9 @@ async def upbit_websocket_client(producer: AIOKafkaProducer) -> None:
                 await websocket.send(orjson.dumps(subscribe_request))
                 logger.info(f"Sent subscription request for tickers: {MARKET_CODES}")
 
-                # 데이터 수신 루프
+                # 데이터 수신 루프: _process_message 함수 호출
                 async for message in websocket:
-                    try:
-                        # 수신된 데이터는 bytes 타입이므로 orjson/json으로 로드
-                        data = orjson.loads(message)
-                        logger.debug(f"Received data: {data}")
-
-                        # 'ticker' 타입 데이터만 처리 (필요시 다른 타입도 처리)
-                        if data.get('type') == 'ticker':
-                            logger.debug(f"Sending Tricker Data Kafka Producer: {data}")
-                            await send_to_kafka(producer, data)
-                        elif data.get('type') == 'trade':
-                            logger.debug(f"Sending Trade Data Kafka Producer: {data}")
-                            await send_to_kafka(producer, data)
-                        else:
-                            logger.debug(f"Ignoring non-ticker message: {data.get('type')}")
-
-                    except orjson.JSONDecodeError as e:
-                        logger.error(f"Failed to decode JSON message: {message}, Error: {e}")
-                    except Exception as e:
-                        logger.error(f"Error processing received message: {e}")
+                    await _process_message(message, producer, kafka_topic)
 
         except (ConnectionClosedError, ConnectionClosedOK) as e:
             logger.warning(f"WebSocket connection closed: {e}. Attempting to reconnect in {RECONNECT_DELAY_SECONDS} seconds...")
