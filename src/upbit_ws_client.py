@@ -6,8 +6,8 @@ import uuid
 from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
 from datetime import datetime, timezone
 
-from config import UPBIT_WEBSOCKET_URI, MARKET_CODES, RECONNECT_DELAY_SECONDS, logger, KAFKA_TOPIC
-from kafka_producer import send_to_kafka
+from src.config import UPBIT_WEBSOCKET_URI, MARKET_CODES, RECONNECT_DELAY_SECONDS, logger, KAFKA_TOPIC
+from src.kafka_producer import send_to_kafka
 
 async def _process_message(message_data: bytes, producer: AIOKafkaProducer, topic: str):
     """

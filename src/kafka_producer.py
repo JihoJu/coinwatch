@@ -2,7 +2,7 @@ from aiokafka import AIOKafkaProducer
 import orjson # orjson 사용, 없으면 import json 사용
 from typing import Dict, Any
 
-from config import KAFKA_BROKERS, logger
+from src.config import KAFKA_BROKERS, logger
 
 async def create_producer() -> AIOKafkaProducer | None:
     """Kafka 프로듀서를 생성하고 시작합니다."""
