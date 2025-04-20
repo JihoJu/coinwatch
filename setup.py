@@ -11,6 +11,7 @@ setup(
         "orjson==3.10.6",
         "asyncio==3.4.3",
         "pytest==8.3.5",
-        "pytest-asyncio==0.26.0"
+        "pytest-asyncio==0.26.0",
+        "freezegun==1.4.0"
     ],
 )
