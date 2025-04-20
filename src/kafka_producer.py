@@ -1,6 +1,5 @@
 from aiokafka import AIOKafkaProducer
 import orjson # orjson 사용, 없으면 import json 사용
-from datetime import datetime, timezone
 from typing import Dict, Any
 
 from config import KAFKA_BROKERS, logger
@@ -32,9 +31,6 @@ async def send_to_kafka(producer: AIOKafkaProducer, topic: str, data: Dict[str, 
         data (Dict[str, Any]): Kafka에 전송할 dict 객체
     """
     try:
-        # 데이터 보강: 수신 타임스탬프 추가 (UTC 기준 ISO 형식)
-        data['received_timestamp_utc'] = datetime.now(timezone.utc).isoformat()
-
         # Kafka 메시지 키 설정 (마켓 코드 사용)
         message_key = data.get('code', data.get('cd')) # 'code' 또는 축약형 'cd' 사용
         if message_key:

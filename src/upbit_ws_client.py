@@ -4,6 +4,7 @@ import websockets
 import orjson # orjson 사용, 없으면 import json 사용
 import uuid
 from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
+from datetime import datetime, timezone
 
 from config import UPBIT_WEBSOCKET_URI, MARKET_CODES, RECONNECT_DELAY_SECONDS, logger, KAFKA_TOPIC
 from kafka_producer import send_to_kafka
@@ -20,6 +21,9 @@ async def _process_message(message_data: bytes, producer: AIOKafkaProducer, topi
     try:
         data = orjson.loads(message_data)
         logger.debug(f"Received data: {data}")
+
+        # 데이터 추가: 수신 타임스탬프 추가 (UTC 기준 ISO 형식)
+        data['received_timestamp_utc'] = datetime.now(timezone.utc).isoformat()
 
         # ticker 또는 trade 타입 데이터 처리
         msg_type = data.get('type')
